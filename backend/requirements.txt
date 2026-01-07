@@ -46,3 +46,5 @@ factory-boy==3.3.0
 # Code Quality
 pylint==3.0.3
 black==23.12.1
+
+Pillow
