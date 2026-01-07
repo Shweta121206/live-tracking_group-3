@@ -37,4 +37,4 @@ USER appuser
 EXPOSE 8000
 
 # Run migrations and start server
-CMD ["sh", "-c", "python manage.py migrate && gunicorn maritime_project.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120"]
+CMD ["sh", "-c", "python manage.py migrate && gunicorn maritime_project.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --timeout 120"]
