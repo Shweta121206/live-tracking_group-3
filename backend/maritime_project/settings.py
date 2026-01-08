@@ -15,13 +15,43 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# #region agent log
+import json
+import traceback
+DEBUG_LOG_PATH = BASE_DIR.parent / '.cursor' / 'debug.log'
+def log_debug_py(location, message, data, hypothesis_id):
+    try:
+        DEBUG_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        log_entry = {
+            "id": f"log_{int(__import__('time').time() * 1000)}",
+            "timestamp": int(__import__('time').time() * 1000),
+            "location": location,
+            "message": message,
+            "data": data,
+            "sessionId": "debug-session",
+            "runId": "run1",
+            "hypothesisId": hypothesis_id
+        }
+        with open(DEBUG_LOG_PATH, 'a') as f:
+            f.write(json.dumps(log_entry) + '\n')
+    except:
+        pass
+# #endregion
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-dev-key-change-in-production')
+if not SECRET_KEY or SECRET_KEY == 'django-insecure-dev-key-change-in-production':
+    log_debug_py("settings.py:19", "WARNING: Using default SECRET_KEY", {}, "D")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+log_debug_py("settings.py:24", "Settings loaded", {
+    "DEBUG": DEBUG,
+    "ALLOWED_HOSTS": ALLOWED_HOSTS,
+    "SECRET_KEY_set": bool(SECRET_KEY and SECRET_KEY != 'django-insecure-dev-key-change-in-production')
+}, "D")
 
 # Application definition
 INSTALLED_APPS = [
@@ -82,9 +112,18 @@ WSGI_APPLICATION = 'maritime_project.wsgi.application'
 
 # Determine database engine from environment
 DATABASE_ENGINE = os.getenv('DATABASE_ENGINE', 'django.db.backends.sqlite3')
+DATABASE_URL_ENV = os.getenv('DATABASE_URL')
+
+log_debug_py("settings.py:84", "Database config start", {
+    "DATABASE_ENGINE": DATABASE_ENGINE,
+    "DATABASE_URL_set": bool(DATABASE_URL_ENV),
+    "DB_NAME": os.getenv('DB_NAME', 'NOT_SET'),
+    "DB_HOST": os.getenv('DB_HOST', 'NOT_SET')
+}, "C")
 
 if DATABASE_ENGINE == 'django.db.backends.postgresql':
     # Production: PostgreSQL
+    log_debug_py("settings.py:87", "Using PostgreSQL with individual env vars", {}, "C")
     DATABASES = {
         'default': {
             'ENGINE': DATABASE_ENGINE,
@@ -99,16 +138,29 @@ if DATABASE_ENGINE == 'django.db.backends.postgresql':
             }
         }
     }
-elif os.getenv('DATABASE_URL'):
+elif DATABASE_URL_ENV:
     # Alternative: Use DATABASE_URL for PostgreSQL
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=os.getenv('DATABASE_URL'),
-            conn_max_age=600
-        )
-    }
+    log_debug_py("settings.py:103", "Using DATABASE_URL", {"has_url": True}, "C")
+    try:
+        DATABASES = {
+            'default': dj_database_url.config(
+                default=DATABASE_URL_ENV,
+                conn_max_age=600
+            )
+        }
+        log_debug_py("settings.py:109", "DATABASE_URL parsed successfully", {
+            "engine": DATABASES['default'].get('ENGINE', 'unknown'),
+            "host": DATABASES['default'].get('HOST', 'unknown')
+        }, "C")
+    except Exception as e:
+        log_debug_py("settings.py:115", "DATABASE_URL parsing failed", {
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }, "C")
+        raise
 else:
     # Development: SQLite
+    log_debug_py("settings.py:120", "Using SQLite fallback", {}, "C")
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

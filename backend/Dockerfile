@@ -22,11 +22,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . /app/
 
-# Create logs directory
-RUN mkdir -p /app/logs
+# Make start script executable
+RUN chmod +x /app/start.sh
 
-# Collect static files (for production)
-RUN python manage.py collectstatic --noinput || true
+# Create logs directory
+RUN mkdir -p /app/logs /app/.cursor
+
+# Skip collectstatic during build (will run at startup if needed)
+# This avoids failures when DATABASE_URL is not available during build
 
 # Create non-root user
 RUN useradd -m -u 1000 appuser && \
@@ -36,5 +39,5 @@ USER appuser
 # Expose port
 EXPOSE 8000
 
-# Run migrations and start server
-CMD ["sh", "-c", "python manage.py migrate && gunicorn maritime_project.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --timeout 120"]
+# Run the start script
+CMD ["/app/start.sh"]

@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: maritime-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DJANGO_SECRET_KEY
+        sync: false
+      - key: ALLOWED_HOSTS
+        value: ${RENDER_SERVICE_NAME}.onrender.com
+      - key: PORT
+        value: 8000
+      - key: DEBUG
+        value: "False"
