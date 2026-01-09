@@ -46,7 +46,7 @@ if not SECRET_KEY or SECRET_KEY == 'django-insecure-dev-key-change-in-production
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = ["*"]
 log_debug_py("settings.py:24", "Settings loaded", {
     "DEBUG": DEBUG,
     "ALLOWED_HOSTS": ALLOWED_HOSTS,
