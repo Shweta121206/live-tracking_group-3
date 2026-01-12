@@ -192,9 +192,47 @@ class UserRegistrationView(generics.CreateAPIView):
     
     def create(self, request, *args, **kwargs):
         """Create new user"""
+        # #region agent log
+        import json
+        import traceback
+        from pathlib import Path
+        DEBUG_LOG_PATH = Path(__file__).resolve().parent.parent.parent.parent / '.cursor' / 'debug.log'
+        def log_debug_py(location, message, data, hypothesis_id):
+            try:
+                DEBUG_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+                log_entry = {
+                    "id": f"log_{int(__import__('time').time() * 1000)}",
+                    "timestamp": int(__import__('time').time() * 1000),
+                    "location": location,
+                    "message": message,
+                    "data": data,
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": hypothesis_id
+                }
+                with open(DEBUG_LOG_PATH, 'a') as f:
+                    f.write(json.dumps(log_entry) + '\n')
+            except:
+                pass
+        # #endregion
+        
+        log_debug_py("views.py:193", "Registration request received", {
+            "email": request.data.get('email', 'NOT_PROVIDED'),
+            "has_first_name": bool(request.data.get('first_name')),
+            "has_last_name": bool(request.data.get('last_name')),
+            "has_password": bool(request.data.get('password')),
+            "has_password_confirm": bool(request.data.get('password_confirm')),
+            "role": request.data.get('role', 'NOT_PROVIDED'),
+            "all_keys": list(request.data.keys())
+        }, "A,B,C")
+        
         serializer = self.get_serializer(data=request.data)
         
         if not serializer.is_valid():
+            log_debug_py("views.py:197", "Serializer validation failed", {
+                "errors": serializer.errors,
+                "error_keys": list(serializer.errors.keys())
+            }, "A")
             return Response({
                 'success': False,
                 'error': {
@@ -203,7 +241,21 @@ class UserRegistrationView(generics.CreateAPIView):
                 }
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        user = serializer.save()
+        log_debug_py("views.py:206", "Serializer valid, attempting to save user", {}, "B")
+        try:
+            user = serializer.save()
+            log_debug_py("views.py:209", "User saved successfully", {
+                "user_id": user.id,
+                "email": user.email,
+                "role": user.role
+            }, "B")
+        except Exception as e:
+            log_debug_py("views.py:215", "User save failed", {
+                "error": str(e),
+                "error_type": type(e).__name__,
+                "traceback": traceback.format_exc()
+            }, "C")
+            raise
         
         # Auto-approve operators, require approval for analyst and admin roles
         if user.role == 'operator':
