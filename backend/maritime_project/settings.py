@@ -39,18 +39,23 @@ def log_debug_py(location, message, data, hypothesis_id):
 # #endregion
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-dev-key-change-in-production')
-if not SECRET_KEY or SECRET_KEY == 'django-insecure-dev-key-change-in-production':
-    log_debug_py("settings.py:19", "WARNING: Using default SECRET_KEY", {}, "D")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+
+if not SECRET_KEY:
+    raise RuntimeError(
+        "DJANGO_SECRET_KEY is not set. "
+        "Set it as an environment variable in Render or .env"
+    )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
+
 log_debug_py("settings.py:24", "Settings loaded", {
     "DEBUG": DEBUG,
     "ALLOWED_HOSTS": ALLOWED_HOSTS,
-    "SECRET_KEY_set": bool(SECRET_KEY and SECRET_KEY != 'django-insecure-dev-key-change-in-production')
+    "SECRET_KEY_set": True
 }, "D")
 
 # Application definition
@@ -262,7 +267,7 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
-    'https://live-tracking-group-3-3gsxhdamr-shweta121206s-projects.vercel.app'
+    'https://live-tracking-group-3-3gsxhdamr-shweta121206s-projects.vercel.app',
 ]
 
 CORS_ALLOW_CREDENTIALS = True
