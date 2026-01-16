@@ -3,6 +3,7 @@ Maritime Project URL Configuration
 Centralized routing for all API endpoints
 """
 
+from turtle import home
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -10,6 +11,11 @@ from django.conf.urls.static import static
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from django.contrib import admin
+from django.http import HttpResponse
+
+def home(request):
+    return HttpResponse("Maritime Live Tracking is running!")
 
 # API Documentation Schema
 schema_view = get_schema_view(
@@ -41,6 +47,7 @@ schema_view = get_schema_view(
 urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
+    path('', home),
     
     # API Documentation
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
